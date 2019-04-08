@@ -10,6 +10,7 @@ import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -19,7 +20,7 @@ import com.reicast.emulator.NativeGLActivity;
 import com.reicast.emulator.config.Config;
 
 public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback {
-    private Handler handler = new Handler();
+    private RendererThread rendererThread = null;
 
     private boolean surfaceReady = false;
     private boolean paused = false;
@@ -66,23 +67,6 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
 
         if (NativeGLActivity.syms != null)
             JNIdc.data(1, NativeGLActivity.syms);
-
-        startRendering();
-    }
-
-    private void startRendering() {
-        // Continuously render frames
-        handler.removeCallbacksAndMessages(null);
-        handler.postAtTime(new Runnable() {
-            @Override
-            public void run() {
-                if (!paused)
-                {
-                    JNIdc.rendframeNative();
-                    handler.post(this);
-                }
-            }
-        }, SystemClock.uptimeMillis() + 500);
     }
 
     @Override
@@ -111,16 +95,23 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
     public void surfaceChanged(SurfaceHolder surfaceHolder, int format, int w, int h) {
         //Log.i("reicast", "NativeGLView.surfaceChanged: " + w + "x" + h);
         surfaceReady = true;
-        JNIdc.rendinitNative(surfaceHolder.getSurface(), w, h);
-        Emulator.getCurrentActivity().handleStateChange(false);
+        if (rendererThread == null) {
+            rendererThread = new RendererThread(surfaceHolder.getSurface(), w, h);
+            rendererThread.start();
+        }
+        else {
+            rendererThread.setSurface(surfaceHolder.getSurface(), w, h);
+        }
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
         //Log.i("reicast", "NativeGLView.surfaceDestroyed");
         surfaceReady = false;
-        JNIdc.rendinitNative(null, 0, 0);
-        Emulator.getCurrentActivity().handleStateChange(true);
+        if (rendererThread != null) {
+            rendererThread.running = false;
+            rendererThread = null;
+        }
     }
 
     public boolean isSurfaceReady() {
@@ -142,7 +133,6 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
             requestFocus();
             JNIdc.resume();
         }
-        startRendering();
     }
 
     @TargetApi(19)
@@ -167,5 +157,41 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
 
     public void setEditVjoyMode(boolean editVjoyMode) {
         vjoyDelegate.setEditVjoyMode(editVjoyMode);
+    }
+
+    class RendererThread extends Thread {
+        private Surface surface;
+        private int width;
+        private int height;
+        volatile public boolean running = true;
+        volatile private boolean surfaceChanged;
+
+        public RendererThread(Surface surface, int width, int height) {
+            setSurface(surface, width, height);
+            this.surfaceChanged = false;
+        }
+
+        public void setSurface(Surface surface, int width, int height) {
+            this.surface = surface;
+            this.width = width;
+            this.height = height;
+            this.surfaceChanged = true;
+        }
+
+        @Override
+        public void run() {
+            JNIdc.rendinitNative(surface, width, height);
+            Emulator.getCurrentActivity().handleStateChange(false);
+
+            while (running) {
+                if (surfaceChanged) {
+                    surfaceChanged = false;
+                    JNIdc.rendinitNative(surface, width, height);
+                }
+                JNIdc.rendframeNative();
+            }
+            JNIdc.rendinitNative(null, 0, 0);
+            Emulator.getCurrentActivity().handleStateChange(true);
+        }
     }
 }
