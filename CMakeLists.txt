@@ -229,7 +229,26 @@ elseif(${HOST_OS} EQUAL ${OS_DARWIN})
     # if NOT USE_SWIFT / ObjC
     #${d_osd}/apple/osx_osd.cpp
     )
+elseif (${HOST_OS} EQUAL ${OS_UWP})
+#
+  message("-----------------------------------------------------")
+  message(" OS: UWP / Windows Store ")
+  message(" FIXME/TODO: This builds ONLY the UWP frontend!")
+  set(COMPILER_VERSION "15")
+  set(PLATFORM STORE)
 
+  # This is the minimum Win 10 version that will allow the app to install - 15063 is current version of WP10 emulators
+  set(MIN_PLATFORM_VERSION "10.0.15063.0")
+
+  # Temporarily only building the UWP app because loads of stuff won't build right now
+  # TODO: Build and hookup with OpenGLES2 renderer and dear imgui UI
+  set(core_SRCS "")
+  set(deps_SRCS "")
+  set(osd_SRCS "")
+  
+  list(APPEND osd_SRCS ${reicast_shell_path}/uwp/reicastApp.cpp)
+  list(APPEND osd_SRCS ${reicast_shell_path}/uwp/reicastApp.h)
+#
 else()
 #
   message("OS Unhandled")
@@ -251,6 +270,9 @@ set(reicast_SRCS ${core_SRCS} ${deps_SRCS} ${osd_SRCS})
 
 add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
 
+if (${HOST_OS} EQUAL ${OS_UWP})
+  set_property(TARGET ${TNAME} PROPERTY VS_WINDOWS_TARGET_PLATFORM_MIN_VERSION "${MIN_PLATFORM_VERSION}")
+endif()
 
 
 

@@ -93,12 +93,14 @@ set(COMPILER_INTEL 0x30000004)
 ## strings are used to append to path/file names, and to filter multiple possibilities down to one 
 #		AMD64/x86_64:x64, i*86:x86, ppc/powerpc[64][b|l]e:ppc[64] etc 
 #
-if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")    # todo: check MATCHES "i.86" ?
+if(("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686") OR    # todo: check MATCHES "i.86" ?
+   ("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x86"))
   set(host_arch "x86")
   set(HOST_CPU ${CPU_X86})
 #
 elseif(("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "AMD64") OR
-       ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64"))
+       ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64") OR
+	   ("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64"))
   set(host_arch "x64")
   set(HOST_CPU ${CPU_X64})
 #
@@ -146,7 +148,6 @@ if("android" STREQUAL "${host_os}"  OR ANDROID)
 
 elseif("windowsstore" STREQUAL "${host_os}")
   set(HOST_OS ${OS_UWP}) 
-  set(HOST_CPU ${CPU_X64})
 
 elseif(CMAKE_HOST_WIN32)
   set(HOST_OS ${OS_WINDOWS}) 
