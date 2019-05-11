@@ -20,12 +20,7 @@ static u32 bufferSize;
 
 static audio_backend_pull_callback_t pull_callback;
 
-static u32 directsound_push(void* frame, u32 samples, bool wait)
-{
-	return 0;
-}
-
-DWORD CALLBACK Thread(PVOID param)
+DWORD CALLBACK dsound_thread(PVOID param)
 {
 	while (dsound_running) {
 		u32 rv = WaitForMultipleObjects(num_buffer_events, buffer_events, FALSE, 20);
@@ -152,8 +147,13 @@ static void directsound_init(
 	verifyc(buffer->Play(0, 0, DSBPLAY_LOOPING));
 
 	dsound_running = true;
-	thread = ::CreateThread(nullptr, 0, Thread, nullptr, 0, &tid);
+	thread = ::CreateThread(nullptr, 0, dsound_thread, nullptr, 0, &tid);
 	::SetThreadPriority(thread, THREAD_PRIORITY_ABOVE_NORMAL);
+}
+
+static u32 directsound_push(void* frame, u32 samples, bool wait)
+{
+	return 0;
 }
 
 static void directsound_term()

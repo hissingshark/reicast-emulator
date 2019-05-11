@@ -1,4 +1,5 @@
-#include "audiobackend_xaudio.h"
+#include "oslib/audiostream.h"
+#if HOST_OS==OS_WINDOWS
 #include "oslib.h"
 #include <initguid.h>
 #include <xaudio2.h>
@@ -15,8 +16,7 @@ IXAudio2MasteringVoice* pMasteringVoice = nullptr;
 byte audioBuffers[MAX_BUFFER_COUNT][RING_BUFFER_SIZE];
 u32 currentBuffer = 0;
 
-static void xaudio_init(
-	audio_backend_pull_callback_t pull_callback)
+static void xaudio_init(audio_backend_pull_callback_t pull_callback)
 {
 	HRESULT hr;
 
@@ -160,3 +160,4 @@ audiobackend_t audiobackend_xaudio = {
 
 
 static bool ds = RegisterAudioBackend(&audiobackend_xaudio);
+#endif
