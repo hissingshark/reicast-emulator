@@ -136,8 +136,8 @@ static void directsound_init(
 	}
 	buffer_events[0] = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-	IDirectSoundNotify8* buffer_notify;
-	verifyc(buffer->QueryInterface(IID_IDirectSoundNotify8, (void**)& buffer_notify));
+	IDirectSoundNotify* buffer_notify;
+	verifyc(buffer->QueryInterface(IID_IDirectSoundNotify, (void**)& buffer_notify));
 	buffer_notify->SetNotificationPositions(num_buffers, notfy);
 	buffer_notify->Release();
 
@@ -147,8 +147,10 @@ static void directsound_init(
 	verifyc(buffer->Play(0, 0, DSBPLAY_LOOPING));
 
 	dsound_running = true;
-	thread = ::CreateThread(nullptr, 0, dsound_thread, nullptr, 0, &tid);
-	::SetThreadPriority(thread, THREAD_PRIORITY_ABOVE_NORMAL);
+	if (thread = ::CreateThread(nullptr, 0, dsound_thread, nullptr, 0, &tid))
+	{
+		::SetThreadPriority(thread, THREAD_PRIORITY_ABOVE_NORMAL);
+	}
 }
 
 static u32 directsound_push(void* frame, u32 samples, bool wait)

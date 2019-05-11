@@ -2,6 +2,9 @@
 #include "cfg/cfg.h"
 #include "oslib/oslib.h"
 #include "audiostream.h"
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 struct SoundFrame { s16 l; s16 r; };
 #define SAMPLE_COUNT 4096
@@ -34,9 +37,17 @@ u32 SmallCpuWait()
 }
 
 static float InterpolateCatmull4pt3oX(float x0, float x1, float x2, float x3, float t) {
-	return 0.45* ((2 * x1) + t * ((-x0 + x2) + t * ((2 * x0 - 5 * x1 + 4 * x2 - x3) + t * (-x0 + 3 * x1 - 3 * x2 + x3))));
+	return 0.45f* ((2 * x1) + t * ((-x0 + x2) + t * ((2 * x0 - 5 * x1 + 4 * x2 - x3) + t * (-x0 + 3 * x1 - 3 * x2 + x3))));
 }
 
+static s16 SaturateToS16(float v)
+{
+	if (v > 32767)
+		return 32767;
+	if (v < -32768)
+		return -32768;
+	return (s16)v;
+}
 
 class PullBuffer_t {
 private:
@@ -77,8 +88,8 @@ public:
 		for (int i = 0; i < amt; i++)
 		{
 			SoundFrame res = {
-				InterpolateCatmull4pt3oX(Status[0].l,Status[1].l,Status[2].l,Status[3].l,current_partial_pos),
-				InterpolateCatmull4pt3oX(Status[0].r,Status[1].r,Status[2].r,Status[3].r,current_partial_pos)
+				SaturateToS16(InterpolateCatmull4pt3oX(Status[0].l,Status[1].l,Status[2].l,Status[3].l,current_partial_pos)),
+				SaturateToS16(InterpolateCatmull4pt3oX(Status[0].r,Status[1].r,Status[2].r,Status[3].r,current_partial_pos))
 			};
 			outbuf[i] = res;
 			current_partial_pos += inc;

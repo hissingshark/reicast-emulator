@@ -1,5 +1,5 @@
 #include "oslib/audiostream.h"
-#if HOST_OS==OS_WINDOWS
+#if (HOST_OS==OS_WINDOWS) && defined(_MSC_VER)
 #include "oslib.h"
 #include <initguid.h>
 #include <xaudio2.h>
