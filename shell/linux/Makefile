@@ -236,7 +236,7 @@ else ifneq (,$(findstring gcwz,$(platform)))
 
 # Vero4K
 else ifneq (,$(findstring vero4k,$(platform)))
-    MFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -funsafe-math-optimizations -funroll-loops
+    MFLAGS += -marm -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -funsafe-math-optimizations -funroll-loops
     ASFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
     INCS += -I/opt/vero3/include/
